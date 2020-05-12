@@ -1,3 +1,6 @@
+'''
+This program provides a lot of utils of text embedding project
+'''
 import re
 import time
 import gensim
@@ -14,20 +17,32 @@ class preprocessing_utils():
         self.sentences = "sentences"
         self.stopwords = stopwords
 
+    '''
+    Given a word, return the valid for of the word (not normalization)
+    '''
     def modify_word(self, word):
         if word.startswith("-"):
             word = word[1:]
         return word
 
+    '''
+    Given a word from the raw corpus, check if this is a valid word
+    '''
     def is_valid_word(self, word):
         word = self.modify_word(word.rstrip())
         return word not in self.stopwords and len(word) >= 2
 
+    '''
+    Given a string, tokenize the string and return a list of valid words from the string
+    '''
     def my_tokenizer(self, string):
         string = re.sub('\[\d*,*-*\d*\]', "", string)
         tokenizer = reg_tokenize('[a-zA-Z0-9_-]+') #|\$[\d\.]+|\S+   \w+-\d+
         return [self.modify_word(word) for word in tokenizer.tokenize(string.lower()) if self.is_valid_word(word)]
 
+    '''
+    Given a word embedding model and a vocabulary file, return a compare of the vocabularies of them
+    '''
     def compare_model_vocab_and_corpus_vocab(self, w2v_model_name, corpus_voc_file, not_in):
         w2v_model = gensim.models.KeyedVectors.load_word2vec_format(w2v_model_name, binary=(w2v_model_name.endswith('.bin')))
         res = []
@@ -58,9 +73,9 @@ class preprocessing_utils():
                 if counter % 50000 == 0:
                     print("It has writen " + str(counter) + " words in " + str(time.time() - start) + " seconds")
 
-        print()
-
-
+    '''
+    Read a ".vec" file
+    '''
     def read_vec_file(self, filename):
         with open(filename, 'r', encoding='utf-8') as f:
             i = -1

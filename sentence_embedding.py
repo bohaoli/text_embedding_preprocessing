@@ -1,12 +1,13 @@
+'''
+This program create text embedding of a corpus
+'''
 import numpy as np
 import scipy.linalg as scipy_linalg
-import re
 import json
 import os
 import time
 import gensim
 
-from nltk.tokenize import RegexpTokenizer as reg_tokenize
 from bm25_weighting import bm25_weighting
 from preprocessing_utils import preprocessing_utils
 from idf_score import idf_score
@@ -15,14 +16,18 @@ import nltk.data
 class sentence_embedding():
 
     def __init__(self, w2v_file, dimension, pre_utils, weighting, text_type, weight_of_title=3):
-        self.model = gensim.models.KeyedVectors.load_word2vec_format(w2v_file, binary=True)
-        self.dimension = dimension
-        self.num_of_sentences = 0
-        self.preprocessing_utils = pre_utils
-        self.bm25_weighting = weighting
-        self.text_type = text_type
-        self.weight_of_title = weight_of_title
+        self.model = gensim.models.KeyedVectors.load_word2vec_format(w2v_file, binary=True) # Pretrained word embedding models
+        self.dimension = dimension # number of dimension of the embedding
+        self.num_of_sentences = 0 # counter of number of texts
+        self.preprocessing_utils = pre_utils # an object of the preprocessing utils
+        self.bm25_weighting = weighting # an object of the bm25 weighting
+        self.text_type = text_type # the type of the text. Now we support 3 types, preprocessing_utils.sentences/.articles/paragraphs
+        self.weight_of_title = weight_of_title # We might set a higher weight to the title, default weight is 3
 
+    '''
+    Given a text, return a list. The first item is the number of valid words in the text, and the second
+    value is the embedding of the text is there are more than 0 valid word.
+    '''
     def get_sentence_to_vector(self, sentence):
         res = np.zeros((self.dimension))
         counter = 0
@@ -33,11 +38,18 @@ class sentence_embedding():
                 res += self.model[word] * curr_weighting[word]
         return [counter, res]
 
+    '''
+    Given a text and a list of (text, embedding) pairs, append the text-embedding pair of the given text
+    to the given list
+    '''
     def sentence_to_vector(self, sentence, sentence_List):
         res = self.get_sentence_to_vector(sentence)
         if res[0] > 0:
             sentence_List.append((sentence, res[1].tolist()))
 
+    '''
+    Given two texts, get the cosine similarity of them
+    '''
     def get_similrity(self, sentence1, sentence2):
         v1 = self.get_sentence_to_vector(sentence1)
         v2 = self.get_sentence_to_vector(sentence2)
@@ -113,6 +125,10 @@ class sentence_embedding():
 
         return res
 
+    '''
+    Given the data of a json file of an article, split the article based on text_type (sentences, paragraphs, articles),
+    Return a list of (text, embedding) pairs, each text is a sentence/paragraph/article
+    '''
     def embed(self, data):
         res = []
         documents = self.split_document(data)
@@ -121,6 +137,10 @@ class sentence_embedding():
         self.num_of_sentences += len(res)
         return res
 
+    '''
+    Given a json file of an article, out put the embedding of texts (sentence, paragraph, article) with in this file
+    and output them to a file.
+    '''
     def write_to_json(self, input_file, output_file, doc_id):
         date = "-"
         sentence_vetors = []
@@ -142,6 +162,10 @@ class sentence_embedding():
         with open(output_file, "w") as output:
             output.write(json_object)
 
+    '''
+    Given a set of json files of articles and the output folder, generate a json file of text-embeddings for each 
+    input json file
+    '''
     def sentence_embed_files(self, data_set, output_dir):
         file_counter = 0
         start = time.time()

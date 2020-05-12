@@ -1,3 +1,6 @@
+'''
+This program is to create bm25 scores of a corpus
+'''
 import time
 import shelve
 
@@ -19,9 +22,15 @@ class bm25_weighting():
         self.b = b_value
         self.use_avg = use_avg
 
+    '''
+    Givent the word count and length of the word, return the best match score of the bm25 score in this document
+    '''
     def best_match(self, cwd, len_d):
         return (self.k + 1) * cwd / (cwd + self.k * (1 - self.b + self.b * len_d / self.average_doc_length))
 
+    '''
+    Given a document, return a dictionary whose keys are words in the document and values are the bm25 score of the words
+    '''
     def get_bm25_weight(self, document):
         word_list = self.preprocessing_utils.my_tokenizer(document)
         word_freq = defaultdict(lambda: 0)

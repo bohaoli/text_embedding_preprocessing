@@ -1,3 +1,6 @@
+'''
+This program calculate the idf score of each word in the corpus
+'''
 import json
 import os
 import time
@@ -39,7 +42,10 @@ class idf_score():
                     res.append(self.preprocessing_utils.my_tokenizer(sentence))
         return res
 
-    def embed(self, filename):
+    '''
+    Given a file, extract corpus from the file according to the text type we want.
+    '''
+    def extract_corpus(self, filename):
         res = []
         document = [] # This would only be usful if self.by_sent_para_doc = "by_doc"
         with open(filename, encoding='utf-8') as f:
@@ -68,6 +74,10 @@ class idf_score():
             res.append(document)
         return res
 
+    '''
+    Given a list of corpus, count the number of words in this corpus and store the information 
+    to the dictionary
+    '''
     def add_corpus(self, corpus_buffer):
         print("length of corpus buffer is: " + str(len(corpus_buffer)))
         self.corpus_size += len(corpus_buffer)
@@ -79,6 +89,10 @@ class idf_score():
                     self.idf[word] += 1
                     word_set.add(word)
 
+    '''
+    calculate the df of the corpus
+    '''
+
     def initialize_df(self):
         corpus_buffer = []
         counter = 0
@@ -87,7 +101,7 @@ class idf_score():
         for root, dirs, files in os.walk(self.data_set):
             for name in files:
                 counter += 1
-                corpus_buffer += self.embed(os.path.join(root, name))
+                corpus_buffer += self.extract_corpus(os.path.join(root, name))
                 if counter % 1000 == 0:
                     self.add_corpus(corpus_buffer)
                     print("It takes us " + str(time.time() - start) + " seconds to add " + str(counter) + " files, the size of our idf is " + str(len(self.idf)))
@@ -95,7 +109,9 @@ class idf_score():
         self.add_corpus(corpus_buffer)
         corpus_buffer = []
 
-
+    '''
+    Calculate the idf score of each word in this corpus
+    '''
     def calculate_idf(self):
         sentence = "In the search for a vaccine against SARS"
         for word in self.preprocessing_utils.my_tokenizer(sentence):
@@ -117,12 +133,18 @@ class idf_score():
                     print("It takes us " + str(time.time() - start) + " seconds to store " + str(counter) + " words to shelve")
             s[self.preprocessing_utils.ave_doc_len_name] = self.average_document_length
 
+    '''
+    Create the vocabulary of the corpus
+    '''
     def create_vocab(self, vocab_file_name):
         with open(vocab_file_name, 'w') as f:
             f.write(str(len(self.idf)))
             for word in self.idf:
                 f.write("\n" + word)
 
+    '''
+    Create idf score of the corpus. May or may not create vocabulary or store the idf score to shelve files.
+    '''
     def preprocessing(self):
         if self.to_store:
             with shelve.open(self.shelve_file_name) as s:
